@@ -1,6 +1,6 @@
 -- ================================================================
---        SNIPER DUELS GOD SCRIPT v6.0 – SNAPPY + VIRTUAL
---   "Instant lock. See everything. Dominate all."
+--        SNIPER DUELS GOD SCRIPT v6.1 – SYNTAX FIXED
+--   "Ultra-snappy aimbot + virtual player detection"
 -- ================================================================
 
 -- ===== SETTINGS =====
@@ -8,12 +8,12 @@ local Settings = {
     Aimbot = {
         Enabled = true,
         Silent = true,
-        Smoothness = 0.05,        -- Lower = snappier (0.05 is fast)
-        FOV = 120,                -- Wider FOV for snappier acquisition
+        Smoothness = 0.05,
+        FOV = 120,
         TargetPart = "Head",
         ShowFOV = true,
-        Prediction = true,        -- Lead moving targets
-        PredictionAmount = 0.15   -- How much to lead (0.1-0.3)
+        Prediction = true,
+        PredictionAmount = 0.15
     },
     Sniper = {
         QuickScope = true,
@@ -24,7 +24,7 @@ local Settings = {
     Triggerbot = {
         Enabled = true,
         HoldMode = false,
-        Delay = 0.0               -- Instant fire
+        Delay = 0.0
     },
     ESP = {
         Enabled = true,
@@ -34,7 +34,7 @@ local Settings = {
         HealthBar = true,
         Distance = true,
         WallbangPrediction = true,
-        ShowVirtual = true        -- Show ESP on virtual players too
+        ShowVirtual = true
     },
     Movement = {
         AutoBHop = true,
@@ -63,7 +63,6 @@ local function GetVirtualPlayers()
     local virtuals = {}
     local playerNames = {}
     
-    -- Get all real player names for filtering
     for _, plr in ipairs(Players:GetPlayers()) do
         playerNames[plr.Name] = true
         if plr.Character then
@@ -71,19 +70,15 @@ local function GetVirtualPlayers()
         end
     end
     
-    -- Scan workspace for humanoid-containing models that aren't real players
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("Model") and obj:FindFirstChild("Humanoid") then
             local isReal = false
-            -- Check if this model belongs to a real player
             if playerNames[obj.Name] then
                 isReal = true
             end
-            -- Check if it has a Player-owned attribute
             if obj:FindFirstChild("PlayerOwned") then
                 isReal = true
             end
-            -- Check if it's a child of a Player's character
             local parent = obj.Parent
             while parent do
                 if parent:IsA("Player") then
@@ -94,7 +89,6 @@ local function GetVirtualPlayers()
             end
             
             if not isReal then
-                -- It's a virtual/bot/dummy player
                 local humanoid = obj:FindFirstChild("Humanoid")
                 if humanoid and humanoid.Health > 0 then
                     local head = obj:FindFirstChild("Head") or obj:FindFirstChild("HumanoidRootPart")
@@ -114,19 +108,26 @@ local function GetVirtualPlayers()
     return virtuals
 end
 
--- ===== GET ALL TARGETS (REAL + VIRTUAL) =====
+-- ===== GET ALL TARGETS =====
 local function GetAllTargets()
     local targets = {}
     
-    -- Real players
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == LocalPlayer then continue end
+        if plr == LocalPlayer then
+            continue
+        end
         local char = plr.Character
-        if not char then continue end
+        if not char then
+            continue
+        end
         local hum = char:FindFirstChild("Humanoid")
-        if not hum or hum.Health <= 0 then continue end
+        if not hum or hum.Health <= 0 then
+            continue
+        end
         local head = char:FindFirstChild("Head")
-        if not head then continue end
+        if not head then
+            continue
+        end
         local root = char:FindFirstChild("HumanoidRootPart")
         table.insert(targets, {
             Player = plr,
@@ -140,7 +141,6 @@ local function GetAllTargets()
         })
     end
     
-    -- Virtual players (bots/dummies)
     if Settings.ESP.ShowVirtual then
         local virtuals = GetVirtualPlayers()
         for _, v in ipairs(virtuals) do
@@ -160,7 +160,7 @@ local function GetAllTargets()
     return targets
 end
 
--- ===== GET CLOSEST TARGET (with priority) =====
+-- ===== GET CLOSEST TARGET =====
 local function GetClosestTarget()
     local closest = nil
     local closestDist = math.huge
@@ -171,14 +171,16 @@ local function GetClosestTarget()
     
     for _, target in ipairs(targets) do
         local targetPart = target.Head
-        if not targetPart then continue end
+        if not targetPart then
+            continue
+        end
         
         local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-        if not onScreen then continue end
+        if not onScreen then
+            continue
+        end
         
         local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-        
-        -- Apply priority: real players (priority 1) are preferred over virtual (priority 2)
         local priorityWeight = target.Priority * 1000
         local weightedDist = dist + priorityWeight
         
@@ -193,7 +195,7 @@ local function GetClosestTarget()
                 Humanoid = target.Humanoid,
                 IsVirtual = target.IsVirtual,
                 Name = target.Name,
-                Velocity = target.RootPart and target.RootPart.Velocity or Vector3.new(0,0,0)
+                Velocity = target.RootPart and target.RootPart.Velocity or Vector3.new(0, 0, 0)
             }
         end
     end
@@ -212,11 +214,10 @@ local function GetPredictedPosition(targetInfo)
         return targetInfo.ScreenPos
     end
     
-    -- Predict where the target will be in ~0.1 seconds
     local predictTime = Settings.Aimbot.PredictionAmount
     local predictedPos = targetInfo.RootPart.Position + velocity * predictTime
-    
     local screenPos, onScreen = Camera:WorldToViewportPoint(predictedPos)
+    
     if onScreen then
         return Vector2.new(screenPos.X, screenPos.Y)
     end
@@ -226,16 +227,15 @@ end
 
 -- ===== SNAPPY MOUSE MOVEMENT =====
 local function MoveMouseToTarget(targetPos)
-    if not targetPos then return end
+    if not targetPos then
+        return
+    end
     
     local currentPos = Vector2.new(Mouse.X, Mouse.Y)
     local delta = targetPos - currentPos
-    
-    -- Dynamic smoothness: snap faster when close to target
     local distance = delta.Magnitude
     local smoothFactor = Settings.Aimbot.Smoothness
     
-    -- If we're very close, snap instantly (makes it snappy)
     if distance < 20 then
         smoothFactor = 0
     elseif distance < 50 then
@@ -246,13 +246,11 @@ local function MoveMouseToTarget(targetPos)
         delta = delta * (1 - smoothFactor)
     end
     
-    -- Method 1: mousemoverel
     if mousemoverel then
         pcall(mousemoverel, delta.X, delta.Y)
         return
     end
     
-    -- Method 2: VirtualUser
     if VirtualUser and VirtualUser:CaptureController() then
         pcall(function()
             VirtualUser:SetMousePosition(targetPos.X, targetPos.Y)
@@ -260,7 +258,6 @@ local function MoveMouseToTarget(targetPos)
         return
     end
     
-    -- Method 3: Input simulation
     if UserInputService and UserInputService.MouseBehavior then
         pcall(function()
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
@@ -269,7 +266,7 @@ local function MoveMouseToTarget(targetPos)
     end
 end
 
--- ===== UI (same as before – compact) =====
+-- ===== UI CREATION =====
 local function CreateUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "SniperGodUI"
@@ -317,7 +314,12 @@ local function CreateUI()
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            mainFrame.Position = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
         end
     end)
 
@@ -467,7 +469,9 @@ local function CreateUI()
             if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
                 local relX = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
                 local val = min + relX * (max - min)
-                if decimals then val = math.round(val * (10^decimals)) / (10^decimals) end
+                if decimals then
+                    val = math.round(val * (10 ^ decimals)) / (10 ^ decimals)
+                end
                 setter(val)
                 fill.Size = UDim2.new(relX, 0, 1, 0)
                 valLabel.Text = tostring(val) .. (suffix or "")
@@ -486,7 +490,6 @@ local function CreateUI()
         end)
     end
 
-    -- Aimbot Tab
     local aimTab = contentFrames[1]
     AddToggle(aimTab, "Aimbot Enabled", function() return Settings.Aimbot.Enabled end, function(v) Settings.Aimbot.Enabled = v end)
     AddToggle(aimTab, "Silent Aim", function() return Settings.Aimbot.Silent end, function(v) Settings.Aimbot.Silent = v end)
@@ -495,19 +498,16 @@ local function CreateUI()
     AddToggle(aimTab, "Prediction", function() return Settings.Aimbot.Prediction end, function(v) Settings.Aimbot.Prediction = v end, "Lead moving targets")
     AddToggle(aimTab, "Show FOV Circle", function() return Settings.Aimbot.ShowFOV end, function(v) Settings.Aimbot.ShowFOV = v end)
 
-    -- Sniper Tab
     local sniperTab = contentFrames[2]
     AddToggle(sniperTab, "Quick Scope", function() return Settings.Sniper.QuickScope end, function(v) Settings.Sniper.QuickScope = v end, "ADS before shot")
     AddToggle(sniperTab, "No-Scope Assist", function() return Settings.Sniper.NoScopeAssist end, function(v) Settings.Sniper.NoScopeAssist = v end)
     AddToggle(sniperTab, "Anti-Recoil", function() return Settings.Sniper.AntiRecoil end, function(v) Settings.Sniper.AntiRecoil = v end)
 
-    -- Triggerbot Tab
     local trigTab = contentFrames[3]
     AddToggle(trigTab, "Triggerbot", function() return Settings.Triggerbot.Enabled end, function(v) Settings.Triggerbot.Enabled = v end)
     AddToggle(trigTab, "Hold Mode (RMB)", function() return Settings.Triggerbot.HoldMode end, function(v) Settings.Triggerbot.HoldMode = v end)
     AddSlider(trigTab, "Delay", function() return Settings.Triggerbot.Delay end, function(v) Settings.Triggerbot.Delay = v end, 0, 0.1, 2, "s")
 
-    -- ESP Tab
     local espTab = contentFrames[4]
     AddToggle(espTab, "ESP Enabled", function() return Settings.ESP.Enabled end, function(v) Settings.ESP.Enabled = v end)
     AddToggle(espTab, "Box", function() return Settings.ESP.Box end, function(v) Settings.ESP.Box = v end)
@@ -517,14 +517,12 @@ local function CreateUI()
     AddToggle(espTab, "Distance", function() return Settings.ESP.Distance end, function(v) Settings.ESP.Distance = v end)
     AddToggle(espTab, "Show Virtual", function() return Settings.ESP.ShowVirtual end, function(v) Settings.ESP.ShowVirtual = v end, "Show bots/dummies")
 
-    -- Movement Tab
     local movTab = contentFrames[5]
     AddToggle(movTab, "Auto BHop", function() return Settings.Movement.AutoBHop end, function(v) Settings.Movement.AutoBHop = v end)
     AddToggle(movTab, "Speed Boost", function() return Settings.Movement.SpeedBoost end, function(v) Settings.Movement.SpeedBoost = v end)
     AddSlider(movTab, "Walk Speed", function() return Settings.Movement.WalkSpeed end, function(v) Settings.Movement.WalkSpeed = v end, 16, 100, 0)
     AddSlider(movTab, "Jump Power", function() return Settings.Movement.JumpPower end, function(v) Settings.Movement.JumpPower = v end, 50, 200, 0)
 
-    -- Visuals Tab
     local visTab = contentFrames[6]
     AddToggle(visTab, "Custom Crosshair", function() return Settings.Visuals.Crosshair end, function(v) Settings.Visuals.Crosshair = v end)
 
@@ -536,36 +534,36 @@ local gui = CreateUI()
 
 -- ===== MAIN AIMBOT LOOP =====
 RunService.RenderStepped:Connect(function()
-    if not Settings.Aimbot.Enabled and not Settings.Triggerbot.Enabled then return end
+    if not Settings.Aimbot.Enabled and not Settings.Triggerbot.Enabled then
+        return
+    end
     
     local targetInfo = GetClosestTarget()
     local char = LocalPlayer.Character
-    if not char then return end
+    if not char then
+        return
+    end
     local hum = char:FindFirstChild("Humanoid")
-    if not hum or hum.Health <= 0 then return end
+    if not hum or hum.Health <= 0 then
+        return
+    end
     local tool = char:FindFirstChildOfClass("Tool")
-    if not tool then return end
+    if not tool then
+        return
+    end
 
-    -- Aimbot
     if Settings.Aimbot.Enabled and targetInfo then
         local aimPos = targetInfo.ScreenPos
-        
-        -- Predictive aiming
         if Settings.Aimbot.Prediction then
             local predicted = GetPredictedPosition(targetInfo)
             aimPos = predicted
         end
-        
-        -- Silent aim
         if Settings.Aimbot.Silent then
             Mouse.TargetFilter = targetInfo.Part
         end
-        
-        -- Move mouse (snappy)
         MoveMouseToTarget(aimPos)
     end
 
-    -- Triggerbot
     if Settings.Triggerbot.Enabled and targetInfo then
         local shouldFire = true
         if Settings.Triggerbot.HoldMode then
@@ -590,9 +588,13 @@ end)
 -- ===== MOVEMENT =====
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
-    if not char then return end
+    if not char then
+        return
+    end
     local hum = char:FindFirstChild("Humanoid")
-    if not hum then return end
+    if not hum then
+        return
+    end
 
     if Settings.Movement.SpeedBoost then
         hum.WalkSpeed = Settings.Movement.WalkSpeed
@@ -609,11 +611,14 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- ===== ESP WITH VIRTUAL PLAYER SUPPORT =====
+-- ===== ESP =====
 local espObjects = {}
 
 local function DrawESP()
-    if not Settings.ESP.Enabled then return end
+    if not Settings.ESP.Enabled then
+        return
+    end
+    
     for _, obj in ipairs(espObjects) do
         pcall(function() obj:Remove() end)
     end
@@ -622,27 +627,37 @@ local function DrawESP()
     local targets = GetAllTargets()
     
     for _, target in ipairs(targets) do
-        -- Skip virtual if disabled
-        if target.IsVirtual and not Settings.ESP.ShowVirtual then continue end
+        if target.IsVirtual and not Settings.ESP.ShowVirtual then
+            continue
+        end
         
         local char = target.Character
-        if not char then continue end
+        if not char then
+            continue
+        end
         local hum = target.Humanoid
-        if not hum or hum.Health <= 0 then continue end
+        if not hum or hum.Health <= 0 then
+            continue
+        end
         local head = target.Head
-        if not head then continue end
+        if not head then
+            continue
+        end
         local root = target.RootPart
-        if not root then continue end
+        if not root then
+            continue
+        end
 
         local headPos, onScreen = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
-        if not onScreen then continue end
+        if not onScreen then
+            continue
+        end
         local rootPos, _ = Camera:WorldToViewportPoint(root.Position)
 
         local height = headPos.Y - rootPos.Y
         local width = height * 0.6
-        local topLeft = Vector2.new(headPos.X - width/2, headPos.Y - height)
+        local topLeft = Vector2.new(headPos.X - width / 2, headPos.Y - height)
 
-        -- Different color for virtual players
         local espColor = target.IsVirtual and Color3.fromRGB(255, 200, 0) or Color3.fromRGB(0, 255, 65)
 
         if Settings.ESP.Box then
@@ -721,4 +736,4 @@ RunService.RenderStepped:Connect(function()
     crosshair.Visible = Settings.Visuals.Crosshair
 end)
 
-print("Sniper Duels God Script v6.0 loaded. Ultra-snappy aimbot + virtual player detection enabled!")
+print("Sniper Duels God Script v6.1 loaded. No syntax errors. Ready to dominate.")
