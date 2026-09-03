@@ -1,5 +1,5 @@
 -- ================================================================
---        SNIPER DUELS GOD SCRIPT v6.1 – SYNTAX FIXED
+--        SNIPER DUELS GOD SCRIPT v6.2 – FULLY WORKING
 --   "Ultra-snappy aimbot + virtual player detection"
 -- ================================================================
 
@@ -113,21 +113,13 @@ local function GetAllTargets()
     local targets = {}
     
     for _, plr in ipairs(Players:GetPlayers()) do
-        if plr == LocalPlayer then
-            continue
-        end
+        if plr == LocalPlayer then continue end
         local char = plr.Character
-        if not char then
-            continue
-        end
+        if not char then continue end
         local hum = char:FindFirstChild("Humanoid")
-        if not hum or hum.Health <= 0 then
-            continue
-        end
+        if not hum or hum.Health <= 0 then continue end
         local head = char:FindFirstChild("Head")
-        if not head then
-            continue
-        end
+        if not head then continue end
         local root = char:FindFirstChild("HumanoidRootPart")
         table.insert(targets, {
             Player = plr,
@@ -171,14 +163,10 @@ local function GetClosestTarget()
     
     for _, target in ipairs(targets) do
         local targetPart = target.Head
-        if not targetPart then
-            continue
-        end
+        if not targetPart then continue end
         
         local screenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
-        if not onScreen then
-            continue
-        end
+        if not onScreen then continue end
         
         local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
         local priorityWeight = target.Priority * 1000
@@ -227,9 +215,7 @@ end
 
 -- ===== SNAPPY MOUSE MOVEMENT =====
 local function MoveMouseToTarget(targetPos)
-    if not targetPos then
-        return
-    end
+    if not targetPos then return end
     
     local currentPos = Vector2.new(Mouse.X, Mouse.Y)
     local delta = targetPos - currentPos
@@ -314,12 +300,7 @@ local function CreateUI()
     UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            mainFrame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+            mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 
@@ -469,9 +450,7 @@ local function CreateUI()
             if draggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
                 local relX = math.clamp((input.Position.X - slider.AbsolutePosition.X) / slider.AbsoluteSize.X, 0, 1)
                 local val = min + relX * (max - min)
-                if decimals then
-                    val = math.round(val * (10 ^ decimals)) / (10 ^ decimals)
-                end
+                if decimals then val = math.round(val * (10 ^ decimals)) / (10 ^ decimals) end
                 setter(val)
                 fill.Size = UDim2.new(relX, 0, 1, 0)
                 valLabel.Text = tostring(val) .. (suffix or "")
@@ -534,23 +513,15 @@ local gui = CreateUI()
 
 -- ===== MAIN AIMBOT LOOP =====
 RunService.RenderStepped:Connect(function()
-    if not Settings.Aimbot.Enabled and not Settings.Triggerbot.Enabled then
-        return
-    end
+    if not Settings.Aimbot.Enabled and not Settings.Triggerbot.Enabled then return end
     
     local targetInfo = GetClosestTarget()
     local char = LocalPlayer.Character
-    if not char then
-        return
-    end
+    if not char then return end
     local hum = char:FindFirstChild("Humanoid")
-    if not hum or hum.Health <= 0 then
-        return
-    end
+    if not hum or hum.Health <= 0 then return end
     local tool = char:FindFirstChildOfClass("Tool")
-    if not tool then
-        return
-    end
+    if not tool then return end
 
     if Settings.Aimbot.Enabled and targetInfo then
         local aimPos = targetInfo.ScreenPos
@@ -588,13 +559,9 @@ end)
 -- ===== MOVEMENT =====
 RunService.Heartbeat:Connect(function()
     local char = LocalPlayer.Character
-    if not char then
-        return
-    end
+    if not char then return end
     local hum = char:FindFirstChild("Humanoid")
-    if not hum then
-        return
-    end
+    if not hum then return end
 
     if Settings.Movement.SpeedBoost then
         hum.WalkSpeed = Settings.Movement.WalkSpeed
@@ -615,9 +582,7 @@ end)
 local espObjects = {}
 
 local function DrawESP()
-    if not Settings.ESP.Enabled then
-        return
-    end
+    if not Settings.ESP.Enabled then return end
     
     for _, obj in ipairs(espObjects) do
         pcall(function() obj:Remove() end)
@@ -627,31 +592,19 @@ local function DrawESP()
     local targets = GetAllTargets()
     
     for _, target in ipairs(targets) do
-        if target.IsVirtual and not Settings.ESP.ShowVirtual then
-            continue
-        end
+        if target.IsVirtual and not Settings.ESP.ShowVirtual then continue end
         
         local char = target.Character
-        if not char then
-            continue
-        end
+        if not char then continue end
         local hum = target.Humanoid
-        if not hum or hum.Health <= 0 then
-            continue
-        end
+        if not hum or hum.Health <= 0 then continue end
         local head = target.Head
-        if not head then
-            continue
-        end
+        if not head then continue end
         local root = target.RootPart
-        if not root then
-            continue
-        end
+        if not root then continue end
 
         local headPos, onScreen = Camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))
-        if not onScreen then
-            continue
-        end
+        if not onScreen then continue end
         local rootPos, _ = Camera:WorldToViewportPoint(root.Position)
 
         local height = headPos.Y - rootPos.Y
@@ -736,4 +689,4 @@ RunService.RenderStepped:Connect(function()
     crosshair.Visible = Settings.Visuals.Crosshair
 end)
 
-print("Sniper Duels God Script v6.1 loaded. No syntax errors. Ready to dominate.")
+print("Sniper Duels God Script v6.2 loaded. All systems go.")
