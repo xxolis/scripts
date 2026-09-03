@@ -1,5 +1,5 @@
 -- ================================================================
---        SNIPER DUELS GOD SCRIPT v3.0 – ALL FEATURES
+--        SNIPER DUELS GOD SCRIPT v4.0 – UI FIXED
 --   "One Shot, One Kill – Every Time."
 -- ================================================================
 
@@ -54,7 +54,7 @@ local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
--- ===== UI CREATION =====
+-- ===== FIXED UI CREATION =====
 local function CreateUI()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "SniperGodUI"
@@ -156,7 +156,7 @@ local function CreateUI()
     -- UI Helpers
     local function AddToggle(parent, label, getter, setter, desc)
         local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, -10, 0, 30)
+        frame.Size = UDim2.new(1, -10, 0, desc and 45 or 30)
         frame.BackgroundTransparency = 1
         frame.Parent = parent
 
@@ -200,18 +200,17 @@ local function CreateUI()
             d.Font = Enum.Font.Code
             d.TextSize = 10
             d.Parent = frame
-            frame.Size = UDim2.new(1, -10, 0, 45)
         end
     end
 
     local function AddSlider(parent, label, getter, setter, min, max, decimals, suffix)
         local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(1, -10, 0, 35)
+        frame.Size = UDim2.new(1, -10, 0, 45)
         frame.BackgroundTransparency = 1
         frame.Parent = parent
 
         local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(0.6, 0, 1, 0)
+        lbl.Size = UDim2.new(0.6, 0, 0.5, 0)
         lbl.Text = label
         lbl.TextColor3 = Color3.fromRGB(200, 255, 200)
         lbl.BackgroundTransparency = 1
@@ -221,7 +220,7 @@ local function CreateUI()
         lbl.Parent = frame
 
         local valLabel = Instance.new("TextLabel")
-        valLabel.Size = UDim2.new(0.3, 0, 1, 0)
+        valLabel.Size = UDim2.new(0.3, 0, 0.5, 0)
         valLabel.Position = UDim2.new(0.7, 0, 0, 0)
         valLabel.Text = tostring(getter()) .. (suffix or "")
         valLabel.TextColor3 = Color3.fromRGB(0, 255, 65)
@@ -233,7 +232,7 @@ local function CreateUI()
 
         local slider = Instance.new("Frame")
         slider.Size = UDim2.new(1, 0, 0, 6)
-        slider.Position = UDim2.new(0, 0, 1, -10)
+        slider.Position = UDim2.new(0, 0, 0.7, 0)
         slider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
         slider.Parent = frame
 
@@ -262,6 +261,19 @@ local function CreateUI()
                 fill.Size = UDim2.new(relX, 0, 1, 0)
                 valLabel.Text = tostring(val) .. (suffix or "")
             end
+        end)
+    end
+
+    -- Add UIListLayout to each content frame for proper vertical spacing
+    for _, content in ipairs(contentFrames) do
+        local layout = Instance.new("UIListLayout")
+        layout.FillDirection = Enum.FillDirection.Vertical
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 4)
+        layout.Parent = content
+        
+        layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            content.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 20)
         end)
     end
 
@@ -357,7 +369,6 @@ RunService.RenderStepped:Connect(function()
             if Settings.Aimbot.Silent then
                 Mouse.TargetFilter = targetPart
             end
-            -- Move mouse with smoothness
             local deltaX = screenPos.X - Mouse.X
             local deltaY = screenPos.Y - Mouse.Y
             if Settings.Aimbot.Smoothness > 0 then
@@ -558,4 +569,4 @@ RunService.RenderStepped:Connect(function()
     crosshair.Visible = Settings.Visuals.Crosshair
 end)
 
-print("Sniper Duels God Script v3.0 loaded. All features ready.")
+print("Sniper Duels God Script v4.0 loaded. UI layout fixed!")
