@@ -23,9 +23,9 @@ local ENC_SETTINGS = ""
 -- ===== HARDWARE SPOOFING =====
 local function SpoofHWID()
     -- Override common HWID checks
-    local oldGet = syn and syn.crypt and syn.crypt.hwid or function() return "SPOOFED-0000-0000-0000" end
+    local oldGet = syn and syn.crypt and syn.crypt.hwid or function() return "fe9eb3c8-e9ef-4b2c-93c1-57e61b2764640" end
     if syn and syn.crypt then
-        syn.crypt.hwid = function() return "BANNED-USER-IS-GONE-REAL-HWID" end
+        syn.crypt.hwid = function() return "fe9eb3c8-e9ef-4b2c-93c1-57e61b276464" end
     end
     -- Spoof game-specific checks
     if game:GetService("Players").LocalPlayer then
